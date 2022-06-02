@@ -13,11 +13,11 @@ Get started OpenSearch.
 docker compose up -d
 ```
 
-## OpenSearch Dashboard
+# OpenSearch Dashboard
 
 Access to `http://localhost:5601`.
 
-### Login and select tenant
+## Login and select tenant
 
 Enter `admin` as both *Username* and *Password* to log in.
 
@@ -27,7 +27,7 @@ Select **Private** for tenant.
 
 ![Select your tenant](./docs/images/start-a-cluster-02.png)
 
-### Add sample data
+## Add sample data
 
 ![Add sample data](./docs/images/start-a-cluster-03.png)
 
@@ -39,7 +39,7 @@ The following dashboard can be viewed.
 
 ![Select sample data](./docs/images/start-a-cluster-05.png)
 
-### Execute queries from Console
+## Execute queries from Console
 
 You can execute any query from the Console. (In "Dev tools" - `http://localhost:5601/app/dev_tools`)
 
