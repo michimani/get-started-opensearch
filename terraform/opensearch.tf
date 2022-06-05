@@ -10,10 +10,7 @@ resource "aws_opensearch_domain" "first_opensearch" {
     ebs_enabled = true
     volume_size = 10
   }
-}
 
-resource "aws_opensearch_domain_policy" "policy" {
-  domain_name     = aws_opensearch_domain.first_opensearch.domain_name
   access_policies = <<POLICY
 {
   "Version": "2012-10-17",
