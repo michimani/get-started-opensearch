@@ -1,7 +1,5 @@
-get-started-opensearch
+Start OpenSearch cluster as docker.
 ===
-
-Get started OpenSearch.
 
 # Install OpenSearch as docker image
 
