@@ -9,6 +9,10 @@ Get started OpenSearch.
 
 Read `docker/README.md`
 
+## Manage OpenSearch cluster in Amazon OpenSearch Service using terraform.
+
+Read `terraform/README.md`
+
 ## Use OpenSearch CLI
 
 ### Install
