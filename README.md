@@ -3,53 +3,15 @@ get-started-opensearch
 
 Get started OpenSearch.
 
-# Install OpenSearch as docker image
+# Menu
 
-[Docker - OpenSearch documentation](https://opensearch.org/docs/2.0/opensearch/install/docker/)
+## Start OpensSearch cluster as docker.
 
-## Start a cluster
+Read `docker/README.md`
 
-```bash
-docker compose up -d
-```
+## Use OpenSearch CLI
 
-# OpenSearch Dashboard
-
-Access to `http://localhost:5601`.
-
-## Login and select tenant
-
-Enter `admin` as both *Username* and *Password* to log in.
-
-![Log in to OpenSearch Dashboard](./docs/images/start-a-cluster-01.png)
-
-Select **Private** for tenant.
-
-![Select your tenant](./docs/images/start-a-cluster-02.png)
-
-## Add sample data
-
-![Add sample data](./docs/images/start-a-cluster-03.png)
-
-Select any sample data and **Add data**, **View Data**. (In this case, select "Sample flight data.") 
-
-![Select sample data](./docs/images/start-a-cluster-04.png)
-
-The following dashboard can be viewed.
-
-![Select sample data](./docs/images/start-a-cluster-05.png)
-
-## Execute queries from Console
-
-You can execute any query from the Console. (In "Dev tools" - `http://localhost:5601/app/dev_tools`)
-
-The following is an example of executing `GET _cluster/health`.
-
-![Select sample data](./docs/images/start-a-cluster-06.png)
-
-# OpenSearch CLI
-
-## Install
+### Install
 
 Download from [https://opensearch.org/downloads.html](https://opensearch.org/downloads.html) and install.
 
@@ -58,7 +20,7 @@ Download from [https://opensearch.org/downloads.html](https://opensearch.org/dow
 opensearch-cli version 1.1.0 darwin/amd64
 ```
 
-## Create profile
+### Create profile
 
 Execute the following command to create a profile When prompted for Username and Password, enter `admin` for both.
 
@@ -69,7 +31,7 @@ opensearch-cli profile create \
 --name docker-local
 ```
 
-## Example
+### Example
 
 Here is an example of executing a `GET _cluster/health` query and outputting the results in yaml format.
 
@@ -85,3 +47,7 @@ If you want to omit the `--profile` option, set the environment variable `OPENSE
 ```bash
 export OPENSEARCH_PROFILE=docker-local
 ```
+
+# Author
+
+[michimani210](https://twitter.com/michimani210)
