@@ -19,6 +19,8 @@ Manage OpenSearch cluster in Amazon OpenSearch Service using terraform.
     ```bash
     curl -X GET 'https://checkip.amazonaws.com/'
     ```
+    
+    And, `iam_user_arn` should be the ARN of the IAM User to switch to the IAM Role you will create by this Terraform project. The `sts:AssumeRole` action for any IAM Role must be allowed for this IAM User.
 
 1. run `terraform init`    
 
@@ -40,14 +42,14 @@ Manage OpenSearch cluster in Amazon OpenSearch Service using terraform.
     terraform apply
     ```
     
-## describe domain
+## Describe domain
 
 ```bash
 aws opensearch describe-domain \
 --domain-name 'first-opensearch'
 ```
 
-### cluster endpoint
+### Get cluster endpoint
 
 ```bash
 ENDPOINT=$(
@@ -69,32 +71,158 @@ DASHBOARD=$(
 ) && echo "${DASHBOARD}"
 ```
 
-## call API
+## Calling API by OpenSearch CLI
 
-e.g: get cluster health
-
-### by cURL
+First, create profile of OpenSearch CLI that uses AWS IAM as authentication.
 
 ```bash
-curl -X GET "${ENDPOINT}/_cluster/health"
+opensearch-cli profile create \
+--auth-type aws-iam \
+--endpoint "${ENDPOINT}" \
+--name env-role
 ```
 
-### by OpenSearch CLI
+```bash
+AWS profile name (leave blank if you want to provide credentials using environment variables): # Enter
+AWS service name where your cluster is deployed (for Amazon Elasticsearch Service, use 'es'. For EC2, use 'ec2'): # es
+```
 
-1. create profile
+In addition, create an anonymous profile to ensure that it cannot be accessed by profiles that have not been authenticated by IAM Role.
 
-  ```bash
-  opensearch-cli profile create \
-  --auth-type disabled \
-  --endpoint "${ENDPOINT}" \
-  --name aws-test
-  ```
-  
-2. run
+```bash
+opensearch-cli profile create \
+--auth-type disabled \
+--endpoint "${ENDPOINT}" \
+--name anonymous-for-fos
+```
 
-  ```bash
-  opensearch-cli curl get \
-  --path '_cluster/health' \
-  --output-format yaml \
-  --profile aws-test
-  ```
+```bash
+$ opensearch-cli curl get \
+--path '_cluster/health' \
+--output-format yaml \
+--profile anonymous-for-fos
+
+{
+  "Message": "User: anonymous is not authorized to perform: es:ESHttpGet because no resource-based policy allows the es:ESHttpGet action"
+}
+```
+
+```bash
+$ opensearch-cli curl put \
+--path 'demoindex' \
+--profile anonymous-for-fos
+
+{
+  "Message": "User: anonymous is not authorized to perform: es:ESHttpPut because no resource-based policy allows the es:ESHttpPut action"
+}
+```
+
+### Execute on a read-only
+
+1. Switch to read only role
+
+    ```bash
+    SWITCH_CMD=$( \
+      aws sts assume-role \
+      --role-arn $(aws iam list-roles \
+      --path-prefix '/demo' \
+      --query 'Roles[?contains(to_string(RoleName), `opensearch-read-only`)].Arn' \
+      --output text) \
+      --role-session-name 'opensearch-read-only' \
+      --query 'Credentials.join(``,[`export AWS_ACCESS_KEY_ID=\"`,AccessKeyId,`\" AWS_SECRET_ACCESS_KEY=\"`,SecretAccessKey,`\" AWS_SESSION_TOKEN=\"`,SessionToken,`\"`])' \
+      --output text) \
+    && eval ${SWITCH_CMD} \
+    && aws sts get-caller-identity
+    ```
+
+1. Run get action
+
+    ```bash
+    opensearch-cli curl get \
+    --path '_cluster/health' \
+    --output-format yaml \
+    --profile env-role
+    ```
+
+1. Run put action (will be failed)
+
+    ```bash
+    opensearch-cli curl put \
+    --path 'demoindex' \
+    --profile env-role
+    ```
+    
+    output
+    
+    ```json
+    {
+      "Message": "User: arn:aws:sts::000000000000:assumed-role/opensearch-read-only/opensearch-read-only is not authorized to perform: es:ESHttpPut because no identity-based policy allows the es:ESHttpPut action"
+    }
+    ```
+
+1. Exit from a switched roll.
+
+    ```bash
+    unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+    ```
+
+### Execute on an Administrator
+
+1. Switch to read only role
+
+    ```bash
+    SWITCH_CMD=$( \
+      aws sts assume-role \
+      --role-arn $(aws iam list-roles \
+      --path-prefix '/demo' \
+      --query 'Roles[?contains(to_string(RoleName), `opensearch-admin`)].Arn' \
+      --output text) \
+      --role-session-name 'opensearch-admin' \
+      --query 'Credentials.join(``,[`export AWS_ACCESS_KEY_ID=\"`,AccessKeyId,`\" AWS_SECRET_ACCESS_KEY=\"`,SecretAccessKey,`\" AWS_SESSION_TOKEN=\"`,SessionToken,`\"`])' \
+      --output text) \
+    && eval ${SWITCH_CMD} \
+    && aws sts get-caller-identity
+    ```
+
+1. Run get action
+
+    ```bash
+    opensearch-cli curl get \
+    --path '_cluster/health' \
+    --output-format yaml \
+    --profile env-role
+    ```
+
+1. Run put action (will be succeeded)
+
+    ```bash
+    opensearch-cli curl put \
+    --path 'demoindex' \
+    --profile env-role
+    ```
+    
+        output
+    
+    ```json
+    {"acknowledged":true,"shards_acknowledged":true,"index":"demoindex"}
+    ```
+    
+1. Run delete action
+
+    ```bash
+    opensearch-cli curl delete \
+    --path 'demoindex' \
+    --profile env-role
+    ```
+    
+    output
+    
+    ```json
+    {"acknowledged":true}
+    ```
+
+1. Exit from a switched roll.
+
+    ```bash
+    unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+    ```
